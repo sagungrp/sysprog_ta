@@ -5,9 +5,9 @@ import time
 from pad4pi import rpi_gpio
 
 
-pins_data=[18, 23, 24, 25]
-pin_e=7
-pin_rs=8
+pins_data=[23, 18, 24, 15]
+pin_e=22
+pin_rs=20
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(pin_e, GPIO.OUT)
