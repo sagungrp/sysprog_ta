@@ -94,13 +94,14 @@ def sendDataToServer(data):
 
 def processKeyOption(key):
     global option
-    option = int(key)
+    if key.isdigit():
+        option = int(key)
 
 def processNomorSepedaKey(key):
     global nomor_sepeda
     if key.isdigit():
         nomor_sepeda = nomor_sepeda * 10 + int(key)
-        print nomor_sepeda
+        print key
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
@@ -118,6 +119,11 @@ def processNomorSepedaFinishedFlag(key):
         nomor_sepeda_finish_flag = 1
 
 def pinjam():
+    keypad.clearKeyPressHandler()
+    keypad.registerKeyPressHandler(processNomorSepedaKey)
+    keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
+    keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
+
     #lcd.cursor_pos = (0,0)
     #lcd.write_string(u"Nomor Sepeda?")
     print "Nomor Sepeda?"
@@ -127,57 +133,29 @@ def pinjam():
     #lcd.clear()
     #lcd.cursor_pos = (0,0)
     #lcd.write_string("Pnjm Spd " + no_sepeda + "?")
+    keypad.clearKeyPressHandler()
     print "Pnjm Spd " + no_sepeda + "?"
     #lcd.cursor_pos = (1,0)
     #lcd.write_string("1:Ya 2:No")
     print "1:Ya 2:No"
+    keypa.registerKeyPressHandler(processPinjamSepedaConfirmKey)
     while confirm_pinjam_sepeda_flag != 1 or confirm_pinjam_sepeda_flag != 2:
         pass
     #lcd.clear()
     if(confirm_pinjam_sepeda_flag == 1):
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
-        continue_reading = True
-        while continue_reading:
-            # Scan for cards    
-            (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
-            # If a card is found
-            # if status == MIFAREReader.MI_OK:
-            #     print "Card detected"
-            
-            # Get the UID of the card
-            (status,uid) = MIFAREReader.MFRC522_Anticoll()
-
-            # If we have the UID, continue
-            if status == MIFAREReader.MI_OK:
-
-                # Print UID
-                # print "Card read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])
-                global_uid = str(uid[0])+":"+str(uid[1])+":"+str(uid[2])+":"+str(uid[3])
-                # This is the default key for authentication
-                key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
-                
-                # Select the scanned tag
-                MIFAREReader.MFRC522_SelectTag(uid)
-
-                # Authenticate
-                status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
-                # Check if authenticated
-                if status == MIFAREReader.MI_OK:
-                    MIFAREReader.MFRC522_Read(8)
-                    MIFAREReader.MFRC522_StopCrypto1()
-                    data = ""
-                    data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + nomor_sepeda
-                    response = sendDataToServer(data)
-                    print "Sending data to server"
-                    if(response.status_code == 200):
-                        lcd.write_string("Yay terpinjam")
-                        print "Yay terpinjam"
-                        time.sleep(5)
-                else:
-                    print "Authentication error"
+        data = ""
+        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + nomor_sepeda
+        response = sendDataToServer(data)
+        print "Sending data to server"
+        if(response.status_code == 200):
+            lcd.write_string("Yay terpinjam")
+            print "Yay terpinjam"
+            global continue_reading
+            continue_reading = false
+            time.sleep(1)
     elif(confirm_pinjam_sepeda_flag == 2):
         pinjam()
-    return opt
 
 def wrong_button(text_up, text_down):
     #lcd.clear()
@@ -198,24 +176,56 @@ def wait_input(switch):
     while not GPIO.input(switch):
         time.sleep(0.01)
 
-#Register Handler
-keypad.registerKeyPressHandler(processKeyOption)
-keypad.registerKeyPressHandler(processNomorSepedaKey)
-keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
-keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
-keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
-
-print "Pinjam/Kembali?"
-print "1:P 2:K"
 while True:
-    #lcd.cursor_pos = (0,0)
-    #lcd.write_string("Pinjam/Kembali?")
-    #print "Pinjam/Kembali?"
-    #lcd.cursor_pos = (1,0)
-    #lcd.write_string("1:P 2:K")
-    #print "1:P 2:K 3:Back"
-    #lcd.clear()
-    if(option == 1):
-        pinjam()
-    elif (option == 2):
-        kembali()
+    continue_reading = True
+    print "Silahkan Tap Kartu Anda"
+    while continue_reading:
+        # Scan for cards    
+        (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+        # If a card is found
+        # if status == MIFAREReader.MI_OK:
+        #     print "Card detected"
+                
+        # Get the UID of the card
+        (status,uid) = MIFAREReader.MFRC522_Anticoll()
+
+        # If we have the UID, continue
+        if status == MIFAREReader.MI_OK:
+
+            # Print UID
+            # print "Card read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])
+            global_uid = str(uid[0])+":"+str(uid[1])+":"+str(uid[2])+":"+str(uid[3])
+            # This is the default key for authentication
+            key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
+                    
+            # Select the scanned tag
+            MIFAREReader.MFRC522_SelectTag(uid)
+
+            # Authenticate
+            status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
+            # Check if authenticated
+            if status == MIFAREReader.MI_OK:
+                MIFAREReader.MFRC522_Read(8)
+                MIFAREReader.MFRC522_StopCrypto1()
+                keypad.registerKeyPressHandler(processKeyOption)
+                #lcd.cursor_pos = (0,0)
+                #lcd.write_string("Pinjam/Kembali?")
+                #print "Pinjam/Kembali?"
+                #lcd.cursor_pos = (1,0)
+                #lcd.write_string("1:P 2:K")
+                #print "1:P 2:K 3:Back"
+                #lcd.clear()
+                print "Pinjam/Kembali?"
+                print "1:P 2:K"
+                while option == 0:
+                    pass
+                if(option == 1):
+                    pinjam()
+                elif (option == 2):
+                    kembali()
+            else:
+                print "Authentication error"
+
+
+
+
