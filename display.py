@@ -152,7 +152,7 @@ def processNomorSepedaKey(key):
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
-    if(len(str(nomor_sepeda)) >= 1 && key == "D"):
+    if(len(str(nomor_sepeda)) >= 1 and key == "D"):
         nomor_sepeda = nomor_sepeda / 10
         my_lcd.lcd_display_string('', 2, len(str(nomor_sepeda))-1)
 
@@ -221,7 +221,7 @@ def kembali():
     # print "Sending data to server"
     if(response.status_code == 200):
         my_lcd.lcd_clear()
-        my_lcd.lcd_display_string("Sepeda " + peminjaman['nomorSepeda'], 1)
+        my_lcd.lcd_display_string("Sepeda " + str(peminjaman['nomorSepeda']), 1)
         my_lcd.lcd_display_string("Dikembalikan", 2)
         global continue_reading
         continue_reading = False
