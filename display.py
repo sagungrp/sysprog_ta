@@ -5,9 +5,10 @@ import MFRC522
 import signal
 from pad4pi import rpi_gpio
 import requests
+import json
 
 # Getting JWT Token
-url = "http://azurarestapi.herokuapp.com/api/mahasiswas"
+url = "http://azurarestapi.herokuapp.com/api/auth"
 
 payload = "access_token=o2O1JVW8WMy20UtizkzneumvGE1F33ym"
 headers = {
@@ -18,7 +19,9 @@ headers = {
 }
 
 response = requests.request("POST", url, data=payload, headers=headers)
-print(response.text)
+jwt_token = json.loads(response.text)['token']
+
+print jwt_token
 
 continue_reading = True
 
@@ -95,7 +98,7 @@ def processNomorSepedaKeyDelete(key):
 
 def processPinjamSepedaConfirmKey(key):
     global confirm_pinjam_sepeda_flag
-    if(key == "1" || key == "2"):
+    if(key == "1" or key == "2"):
         confirm_pinjam_sepeda_flag = int(key)
 
 def processNomorSepedaFinishedFlag(key):
@@ -115,7 +118,7 @@ def pinjam():
     lcd.write_string("Pnjm Spd " + no_sepeda + "?")
     lcd.cursor_pos = (1,0)
     lcd.write_string("1:Ya 2:No")
-    while confirm_pinjam_sepeda_flag != 1 || confirm_pinjam_sepeda_flag != 2:
+    while confirm_pinjam_sepeda_flag != 1 or confirm_pinjam_sepeda_flag != 2:
         pass
     lcd.clear()
     if(confirm_pinjam_sepeda_flag == 1):
@@ -177,12 +180,12 @@ def wait_input(switch):
         time.sleep(0.01)
 
 #Register Handler
- keypad.registerKeyPressHandler(processKeyOption)
- keypad.registerKeyPressHandler(processKeyOptionPinjam)
- keypad.registerKeyPressHandler(processNomorSepedaKey)
- keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
- keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
- keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
+keypad.registerKeyPressHandler(processKeyOption)
+keypad.registerKeyPressHandler(processKeyOptionPinjam)
+keypad.registerKeyPressHandler(processNomorSepedaKey)
+keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
+keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
+keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
 
 while True:
     lcd.cursor_pos = (0,0)
