@@ -119,7 +119,7 @@ def processNomorSepedaFinishedFlag(key):
         nomor_sepeda_finish_flag = 1
 
 def pinjam():
-    keypad.clearKeyPressHandler()
+    keypad.clearKeyPressHandlers()
     keypad.registerKeyPressHandler(processNomorSepedaKey)
     keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
     keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
@@ -133,7 +133,7 @@ def pinjam():
     #lcd.clear()
     #lcd.cursor_pos = (0,0)
     #lcd.write_string("Pnjm Spd " + no_sepeda + "?")
-    keypad.clearKeyPressHandler()
+    keypad.clearKeyPressHandlers()
     print "Pnjm Spd " + no_sepeda + "?"
     #lcd.cursor_pos = (1,0)
     #lcd.write_string("1:Ya 2:No")
@@ -144,6 +144,9 @@ def pinjam():
     #lcd.clear()
     if(confirm_pinjam_sepeda_flag == 1):
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
+        global global_uid
+        global NAMA_STASIUN_PINJAM
+        global nomor_sepeda
         data = ""
         data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + nomor_sepeda
         response = sendDataToServer(data)
