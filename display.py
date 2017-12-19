@@ -41,15 +41,15 @@ NAMA_STASIUN_PINJAM = "Balairung"
 NAMA_STASIUN_BALIK = "Fakultas Teknik"
 
 # Setup PIN GPIO
-pins_data=[23, 18, 24, 15]
-pin_e=22
-pin_rs=20
+#pins_data=[23, 18, 24, 15]
+#pin_e=22
+#pin_rs=20
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(pin_e, GPIO.OUT)
-GPIO.setup(pin_rs, GPIO.OUT)
-for pin in pins_data:
-    GPIO.setup(pin, GPIO.OUT)
+#GPIO.setup(pin_e, GPIO.OUT)
+#GPIO.setup(pin_rs, GPIO.OUT)
+#for pin in pins_data:
+ #   GPIO.setup(pin, GPIO.OUT)
 
 # Setup Keypad
 KEYPAD = [
@@ -59,13 +59,13 @@ KEYPAD = [
         ["*","0","#","D"]
 ]
 
-COL_PINS = [13,15,19,21] # BCM numbering
-ROW_PINS = [3,5,7,11] # BCM numbering
+COL_PINS = [23,24,25,7] # BCM numbering
+ROW_PINS = [18,17,21,22] # BCM numbering
 
 
 factory = rpi_gpio.KeypadFactory()
 keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PINS)
-lcd = CharLCD(cols=16, rows=2, pin_rs=pin_rs, pin_e=pin_e, pins_data=pins_data, numbering_mode=GPIO.BCM)
+#lcd = CharLCD(cols=16, rows=2, pin_rs=pin_rs, pin_e=pin_e, pins_data=pins_data, numbering_mode=GPIO.BCM)
 
 # Setup Global Variable
 
@@ -98,12 +98,13 @@ def processKeyOption(key):
 
 def processNomorSepedaKey(key):
     global nomor_sepeda
-    if key.isDigit():
+    if key.isdigit():
         nomor_sepeda = nomor_sepeda * 10 + int(key)
+        print nomor_sepeda
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
-    if(key == "C"):
+    if(key == "D"):
         nomor_sepeda = nomor_sepeda / 10
 
 def processPinjamSepedaConfirmKey(key):
@@ -117,22 +118,22 @@ def processNomorSepedaFinishedFlag(key):
         nomor_sepeda_finish_flag = 1
 
 def pinjam():
-    lcd.cursor_pos = (0,0)
-    lcd.write_string(u"Nomor Sepeda?")
+    #lcd.cursor_pos = (0,0)
+    #lcd.write_string(u"Nomor Sepeda?")
     print "Nomor Sepeda?"
     while nomor_sepeda_finish_flag == 0:
         time.sleep(0.1)
         pass
-    lcd.clear()
-    lcd.cursor_pos = (0,0)
-    lcd.write_string("Pnjm Spd " + no_sepeda + "?")
+    #lcd.clear()
+    #lcd.cursor_pos = (0,0)
+    #lcd.write_string("Pnjm Spd " + no_sepeda + "?")
     print "Pnjm Spd " + no_sepeda + "?"
-    lcd.cursor_pos = (1,0)
-    lcd.write_string("1:Ya 2:No")
+    #lcd.cursor_pos = (1,0)
+    #lcd.write_string("1:Ya 2:No")
     print "1:Ya 2:No"
     while confirm_pinjam_sepeda_flag != 1 or confirm_pinjam_sepeda_flag != 2:
         pass
-    lcd.clear()
+    #lcd.clear()
     if(confirm_pinjam_sepeda_flag == 1):
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         continue_reading = True
@@ -179,45 +180,42 @@ def pinjam():
     return opt
 
 def wrong_button(text_up, text_down):
-    lcd.clear()
-    lcd.cursor_pos = (0,0)
-    lcd.write_string("Teken yg bener!")
-    time.sleep(3)
-    lcd.clear()
-    lcd.cursor_pos = (0,0)
-    lcd.write_string(text_up)
-    lcd.cursor_pos = (1,0)
-    lcd.write_string(text_down)
+    #lcd.clear()
+    #lcd.cursor_pos = (0,0)
+    #lcd.write_string("Teken yg bener!")
+    #time.sleep(3)
+    #lcd.clear()
+    #lcd.cursor_pos = (0,0)
+    #lcd.write_string(text_up)
+    #lcd.cursor_pos = (1,0)
+    #lcd.write_string(text_down)
+    pass
 
 def kembali():
     server_kirim()
-    
+ 
 def wait_input(switch):
     while not GPIO.input(switch):
         time.sleep(0.01)
 
 #Register Handler
 keypad.registerKeyPressHandler(processKeyOption)
-keypad.registerKeyPressHandler(processKeyOptionPinjam)
 keypad.registerKeyPressHandler(processNomorSepedaKey)
 keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
 keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
 keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
 
+print "Pinjam/Kembali?"
+print "1:P 2:K"
 while True:
-    lcd.cursor_pos = (0,0)
-    lcd.write_string("Pinjam/Kembali?")
-    print "Pinjam/Kembali?"
-    lcd.cursor_pos = (1,0)
-    lcd.write_string("1:P 2:K 3:Back")
-    print "1:P 2:K 3:Back"
-    lcd.clear()
+    #lcd.cursor_pos = (0,0)
+    #lcd.write_string("Pinjam/Kembali?")
+    #print "Pinjam/Kembali?"
+    #lcd.cursor_pos = (1,0)
+    #lcd.write_string("1:P 2:K")
+    #print "1:P 2:K 3:Back"
+    #lcd.clear()
     if(option == 1):
         pinjam()
     elif (option == 2):
         kembali()
-    else:
-        lcd.clear()
-        lcd.write_string("Salah Pencet")
-        print "Salah Pencet"
-        time.sleep(1)

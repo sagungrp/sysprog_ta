@@ -9,8 +9,8 @@ KEYPAD = [
     ["*", "0", "#", "D"]
 ]
 
-ROW_PINS = [7, 17, 21, 22] # BCM numbering
-COL_PINS = [10, 9, 11, 8] # BCM numbering
+COL_PINS = [23, 24, 25, 7] # BCM numbering
+ROW_PINS = [18, 17, 21, 22 ] # BCM numbering
 
 factory = rpi_gpio.KeypadFactory()
 
@@ -19,6 +19,7 @@ keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PI
 return_value_temp = -1
 
 def printKey(key):
+    print key
     global string
     global return_value_temp
     if key == '*':
@@ -31,7 +32,7 @@ def printKey(key):
 # printKey will be called each time a keypad button is pressed
 keypad.registerKeyPressHandler(printKey)
 
-while len(string) <= 4:
+while len(string) <= 402191:
     time.sleep(0.1)
     print string
     pass
