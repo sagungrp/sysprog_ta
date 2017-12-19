@@ -6,6 +6,7 @@ import signal
 from pad4pi import rpi_gpio
 import requests
 import json
+import lcd_driver as lcd
 
 # Getting JWT Token
 url = "http://azurarestapi.herokuapp.com/api/auth"
@@ -23,10 +24,13 @@ jwt_token = 'Bearer ' + json.loads(response.text)['token']
 
 continue_reading = True
 
+my_lcd = lcd.lcd()
+
+
+
 # Capture SIGINT for cleanup when the script is aborted
 def end_read(signal,frame):
     global continue_reading
-    print "Ctrl+C captured, ending read."
     continue_reading = False
     GPIO.cleanup()
 
@@ -74,8 +78,37 @@ pinjam_option = 0
 nomor_sepeda = 0
 confirm_pinjam_sepeda_flag = 0
 nomor_sepeda_finish_flag = 0
-
 global_uid = ''
+
+def clear_variable():
+    global option
+    global pinjam_option
+    global nomor_sepeda
+    global confirm_pinjam_sepeda_flag
+    global nomor_sepeda_finish_flag
+    global global_uid 
+
+    option = 0
+    pinjam_option = 0
+    nomor_sepeda = 0
+    confirm_pinjam_sepeda_flag = 0
+    nomor_sepeda_finish_flag = 0
+    global_uid = ''
+
+def getCardDataFromServer(uid):
+    global jwt_token
+
+    url = "http://azurarestapi.herokuapp.com/api/peminjamans/" + uid
+
+    headers = {
+        'authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVhMzg4YWFiYTg2ZTg2MDAxNDY3MmQzMSIsImlhdCI6MTUxMzY4MTI0NX0.duSg8e2ZZhm8EMkvK_dzEFgRsGrhlQ8sSIFZ6M-fNMM",
+        'cache-control': "no-cache",
+        'postman-token': "611c9049-a317-84d4-20a4-1386b1551adf"
+    }
+
+    response = requests.request("GET", url, headers=headers)
+    return response
+
 
 def sendDataToServer(data):
     global jwt_token
@@ -86,11 +119,22 @@ def sendDataToServer(data):
         'content-type': "application/x-www-form-urlencoded",
         'authorization': jwt_token,
         'cache-control': "no-cache",
-        'postman-token': "80b6c5f7-9546-e304-50c7-c6e6379b20ae"
     }
     response = requests.request("POST", url, data=payload, headers=headers)
-    print data
-    print response
+    return response
+
+
+def sendDataToServerKembali(data):
+    global jwt_token
+    url = "https://azurarestapi.herokuapp.com/api/peminjamans"
+
+    payload = data
+    headers = {
+        'content-type': "application/x-www-form-urlencoded",
+        'authorization': jwt_token,
+        'cache-control': "no-cache",
+    }
+    response = requests.request("PUT", url, data=payload, headers=headers)
     return response
 
 def processKeyOption(key):
@@ -102,7 +146,7 @@ def processNomorSepedaKey(key):
     global nomor_sepeda
     if key.isdigit():
         nomor_sepeda = nomor_sepeda * 10 + int(key)
-        print key
+        my_lcd.lcd_display_string(key, 2, len(str(nomor_sepeda)))
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
@@ -126,20 +170,14 @@ def pinjam():
     keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
     global nomor_sepeda
     global confirm_pinjam_sepeda_flag
-    #lcd.cursor_pos = (0,0)
-    #lcd.write_string(u"Nomor Sepeda?")
-    print "Nomor Sepeda?"
+    my_lcd.lcd_display_string("Nomor Sepeda?", 1)
     while nomor_sepeda_finish_flag == 0:
         time.sleep(0.1)
         pass
-    #lcd.clear()
-    #lcd.cursor_pos = (0,0)
-    #lcd.write_string("Pnjm Spd " + no_sepeda + "?")
     keypad.clearKeyPressHandlers()
-    print "Pnjm Spd " + str(nomor_sepeda) + "?"
-    #lcd.cursor_pos = (1,0)
-    #lcd.write_string("1:Ya 2:No")
-    print "1:Ya 2:No"
+    my_lcd.lcd_clear()
+    my_lcd.lcd_display_string("Pnjm Spd " + str(nomor_sepeda) + "?", 1)
+    my_lcd.lcd_display_string("1:Ya 2:No", 2)
     keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
     while confirm_pinjam_sepeda_flag != 1 and confirm_pinjam_sepeda_flag != 2:
         pass
@@ -152,6 +190,43 @@ def pinjam():
         data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + str(nomor_sepeda)
         response = sendDataToServer(data)
         print response.text
+        if(response.status_code == 200):
+            my_lcd.lcd_clear()
+            my_lcd.lcd_display_string("Yay terpinjam", 1)
+            global continue_reading
+            continue_reading = False
+            time.sleep(1)
+        elif(response.status_code == 404):
+            my_lcd.lcd_display_string("Sudah meminjam", 2)
+        clear_variable()
+    elif(confirm_pinjam_sepeda_flag == 2):
+        clear_variable()
+        pinjam()
+
+def kembali():
+    keypad.clearKeyPressHandlers()
+    keypad.registerKeyPressHandler(processNomorSepedaKey)
+    keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
+    keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
+    global confirm_pinjam_sepeda_flag
+  
+    while nomor_sepeda_finish_flag == 0:
+        time.sleep(0.1)
+        pass
+    keypad.clearKeyPressHandlers()
+    print "Pnjm Spd " + str(nomor_sepeda) + "?"
+    print "1:Ya 2:No"
+    keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
+    while confirm_pinjam_sepeda_flag != 1 and confirm_pinjam_sepeda_flag != 2:
+        pass
+    if(confirm_pinjam_sepeda_flag == 1):
+        # This loop keeps checking for chips. If one is near it will get the UID and authenticate
+        global global_uid
+        global NAMA_STASIUN_PINJAM
+        data = ""
+        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM
+        response = sendDataToServerKembali(data)
+        print response.text
         print "Sending data to server"
         if(response.status_code == 200):
             #lcd.write_string("Yay terpinjam")
@@ -159,30 +234,12 @@ def pinjam():
             global continue_reading
             continue_reading = False
             time.sleep(1)
-        else:
-            print "Sudah dipinjam"
-            pass
+        elif(response.status_code == 404):
+            print "Status tidak lagi meminjam"
+        clear_variable()
     elif(confirm_pinjam_sepeda_flag == 2):
+        clear_variable()
         pinjam()
-
-def wrong_button(text_up, text_down):
-    #lcd.clear()
-    #lcd.cursor_pos = (0,0)
-    #lcd.write_string("Teken yg bener!")
-    #time.sleep(3)
-    #lcd.clear()
-    #lcd.cursor_pos = (0,0)
-    #lcd.write_string(text_up)
-    #lcd.cursor_pos = (1,0)
-    #lcd.write_string(text_down)
-    pass
-
-def kembali():
-    server_kirim()
- 
-def wait_input(switch):
-    while not GPIO.input(switch):
-        time.sleep(0.01)
 
 while True:
     continue_reading = True
@@ -213,24 +270,17 @@ while True:
             status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
             # Check if authenticated
             if status == MIFAREReader.MI_OK:
-                MIFAREReader.MFRC522_Read(8)
-                MIFAREReader.MFRC522_StopCrypto1()
-                keypad.registerKeyPressHandler(processKeyOption)
-                #lcd.cursor_pos = (0,0)
-                #lcd.write_string("Pinjam/Kembali?")
-                #print "Pinjam/Kembali?"
-                #lcd.cursor_pos = (1,0)
-                #lcd.write_string("1:P 2:K")
-                #print "1:P 2:K 3:Back"
-                #lcd.clear()
-                print "Pinjam/Kembali?"
-                print "1:P 2:K"
-                while option == 0:
-                    pass
-                if(option == 1):
+                response = getCardDataFromServer(global_uid)
+                if(response.status_code == 200):
+                    peminjaman = json.load(response.text)
+                    if peminjaman['statusPinjam']:
+                        kembali()
+                    else:
+                        pinjam()
+                elif(response.status_code == 404):
                     pinjam()
-                elif (option == 2):
-                    kembali()
+                else:
+                    print "An error occured"
             else:
                 print "Authentication error"
 
