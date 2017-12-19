@@ -79,6 +79,7 @@ nomor_sepeda = 0
 confirm_pinjam_sepeda_flag = 0
 nomor_sepeda_finish_flag = 0
 global_uid = ''
+peminjaman = None
 
 def clear_variable():
     global option
@@ -94,6 +95,7 @@ def clear_variable():
     confirm_pinjam_sepeda_flag = 0
     nomor_sepeda_finish_flag = 0
     global_uid = ''
+    peminjaman = None
 
 def getCardDataFromServer(uid):
     global jwt_token
@@ -150,8 +152,9 @@ def processNomorSepedaKey(key):
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
-    if(key == "D"):
+    if(len(str(nomor_sepeda)) >= 1 && key == "D"):
         nomor_sepeda = nomor_sepeda / 10
+        my_lcd.lcd_display_string('', 2, len(str(nomor_sepeda))-1)
 
 def processPinjamSepedaConfirmKey(key):
     global confirm_pinjam_sepeda_flag
@@ -187,59 +190,46 @@ def pinjam():
         global global_uid
         global NAMA_STASIUN_PINJAM
         data = ""
-        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + str(nomor_sepeda)
+        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&nomorSepeda=" + str(nomor_sepeda)
+        my_lcd.lcd_clear()
+        my_lcd.lcd_display_string("Loading", 1)
         response = sendDataToServer(data)
-        print response.text
         if(response.status_code == 200):
             my_lcd.lcd_clear()
-            my_lcd.lcd_display_string("Yay terpinjam", 1)
+            my_lcd.lcd_display_string("Silahkan Ambil", 1)
+            my_lcd.lcd_display_string("Sepeda", 2)
             global continue_reading
             continue_reading = False
             time.sleep(4)
         elif(response.status_code == 404):
-            my_lcd.lcd_display_string("Sudah meminjam", 2)
+            my_lcd.lcd_clear()
+            my_lcd.lcd_display_string("Selamat Meminjam", 1)
         clear_variable()
     elif(confirm_pinjam_sepeda_flag == 2):
         clear_variable()
         pinjam()
 
 def kembali():
-    keypad.clearKeyPressHandlers()
-    keypad.registerKeyPressHandler(processNomorSepedaKey)
-    keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
-    keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
-    global confirm_pinjam_sepeda_flag
-  
-    while nomor_sepeda_finish_flag == 0:
-        time.sleep(0.1)
-        pass
-    keypad.clearKeyPressHandlers()
-    print "Pnjm Spd " + str(nomor_sepeda) + "?"
-    print "1:Ya 2:No"
-    keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
-    while confirm_pinjam_sepeda_flag != 1 and confirm_pinjam_sepeda_flag != 2:
-        pass
-    if(confirm_pinjam_sepeda_flag == 1):
-        # This loop keeps checking for chips. If one is near it will get the UID and authenticate
-        global global_uid
-        global NAMA_STASIUN_PINJAM
-        data = ""
-        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM
-        response = sendDataToServerKembali(data)
-        print response.text
-        print "Sending data to server"
-        if(response.status_code == 200):
-            #lcd.write_string("Yay terpinjam")
-            print "Yay terpinjam"
-            global continue_reading
-            continue_reading = False
-            time.sleep(1)
-        elif(response.status_code == 404):
-            print "Status tidak lagi meminjam"
-        clear_variable()
-    elif(confirm_pinjam_sepeda_flag == 2):
-        clear_variable()
-        pinjam()
+    global peminjaman
+    global global_uid
+    global NAMA_STASIUN_BALIK
+    data = ""
+    data = data + "uidMahasiswa=" + global_uid + '&stasiunBalik=' + NAMA_STASIUN_BALIK
+    my_lcd.lcd_clear()
+    my_lcd.lcd_display_string("Loading", 1)
+    response = sendDataToServerKembali(data)
+    # print "Sending data to server"
+    if(response.status_code == 200):
+        my_lcd.lcd_clear()
+        my_lcd.lcd_display_string("Sepeda " + peminjaman['nomorSepeda'], 1)
+        my_lcd.lcd_display_string("Dikembalikan", 2)
+        global continue_reading
+        continue_reading = False
+        time.sleep(1)
+    elif(response.status_code == 404):
+        my_lcd.lcd_clear()
+        my_lcd.lcd_display_string("Selamat Meminjam", 1)
+    clear_variable()
 
 while True:
     continue_reading = True
@@ -275,7 +265,8 @@ while True:
                 my_lcd.lcd_clear()
                 response = getCardDataFromServer(global_uid)
                 if(response.status_code == 200):
-                    peminjaman = json.load(response.text)
+                    global peminjaman
+                    peminjaman = json.loads(response.text)
                     if peminjaman['statusPinjam']:
                         kembali()
                     else:
@@ -284,6 +275,9 @@ while True:
                     pinjam()
                 else:
                     print "An error occured"
+
+                MIFAREReader.MFRC522_Read(8)
+                MIFAREReader.MFRC522_StopCrypto1()
             else:
                 print "Authentication error"
 
