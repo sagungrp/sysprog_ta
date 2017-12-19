@@ -63,7 +63,7 @@ KEYPAD = [
         ["*","0","#","D"]
 ]
 
-COL_PINS = [23,24,25,7] # BCM numbering
+COL_PINS = [23,24,14,7] # BCM numbering
 ROW_PINS = [18,17,21,22] # BCM numbering
 
 
@@ -87,7 +87,7 @@ def clear_variable():
     global nomor_sepeda
     global confirm_pinjam_sepeda_flag
     global nomor_sepeda_finish_flag
-    global global_uid 
+    global global_uid
 
     option = 0
     pinjam_option = 0
@@ -153,8 +153,9 @@ def processNomorSepedaKey(key):
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
     if(len(str(nomor_sepeda)) >= 1 and key == "D"):
-        nomor_sepeda = nomor_sepeda / 10
-        my_lcd.lcd_display_string('', 2, len(str(nomor_sepeda))-1)
+        nomor_sepeda = 0
+        my_lcd.lcd_clear()
+        my_lcd.lcd_display_string("Nomor Sepeda?", 1)
 
 def processPinjamSepedaConfirmKey(key):
     global confirm_pinjam_sepeda_flag
@@ -206,6 +207,7 @@ def pinjam():
             my_lcd.lcd_display_string("Selamat Meminjam", 1)
         clear_variable()
     elif(confirm_pinjam_sepeda_flag == 2):
+        my_lcd.lcd_clear()
         clear_variable()
         pinjam()
 
