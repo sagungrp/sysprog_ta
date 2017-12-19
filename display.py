@@ -78,9 +78,8 @@ nomor_sepeda_finish_flag = 0
 global_uid = ''
 
 def sendDataToServer(data):
-
     global jwt_token
-    url = "http://azurarestapi.herokuapp.com/api/peminjamans"
+    url = "https://azurarestapi.herokuapp.com/api/peminjamans"
 
     payload = data
     headers = {
@@ -90,6 +89,8 @@ def sendDataToServer(data):
         'postman-token': "80b6c5f7-9546-e304-50c7-c6e6379b20ae"
     }
     response = requests.request("POST", url, data=payload, headers=headers)
+    print data
+    print response
     return response
 
 def processKeyOption(key):
@@ -123,7 +124,8 @@ def pinjam():
     keypad.registerKeyPressHandler(processNomorSepedaKey)
     keypad.registerKeyPressHandler(processNomorSepedaFinishedFlag)
     keypad.registerKeyPressHandler(processNomorSepedaKeyDelete)
-
+    global nomor_sepeda
+    global confirm_pinjam_sepeda_flag
     #lcd.cursor_pos = (0,0)
     #lcd.write_string(u"Nomor Sepeda?")
     print "Nomor Sepeda?"
@@ -134,29 +136,32 @@ def pinjam():
     #lcd.cursor_pos = (0,0)
     #lcd.write_string("Pnjm Spd " + no_sepeda + "?")
     keypad.clearKeyPressHandlers()
-    print "Pnjm Spd " + no_sepeda + "?"
+    print "Pnjm Spd " + str(nomor_sepeda) + "?"
     #lcd.cursor_pos = (1,0)
     #lcd.write_string("1:Ya 2:No")
     print "1:Ya 2:No"
-    keypa.registerKeyPressHandler(processPinjamSepedaConfirmKey)
-    while confirm_pinjam_sepeda_flag != 1 or confirm_pinjam_sepeda_flag != 2:
+    keypad.registerKeyPressHandler(processPinjamSepedaConfirmKey)
+    while confirm_pinjam_sepeda_flag != 1 and confirm_pinjam_sepeda_flag != 2:
         pass
     #lcd.clear()
     if(confirm_pinjam_sepeda_flag == 1):
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         global global_uid
         global NAMA_STASIUN_PINJAM
-        global nomor_sepeda
         data = ""
-        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + nomor_sepeda
+        data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + str(nomor_sepeda)
         response = sendDataToServer(data)
+        print response.text
         print "Sending data to server"
         if(response.status_code == 200):
-            lcd.write_string("Yay terpinjam")
+            #lcd.write_string("Yay terpinjam")
             print "Yay terpinjam"
             global continue_reading
-            continue_reading = false
+            continue_reading = False
             time.sleep(1)
+        else:
+            print "Sudah dipinjam"
+            pass
     elif(confirm_pinjam_sepeda_flag == 2):
         pinjam()
 
