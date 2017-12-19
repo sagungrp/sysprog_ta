@@ -19,9 +19,7 @@ headers = {
 }
 
 response = requests.request("POST", url, data=payload, headers=headers)
-jwt_token = json.loads(response.text)['token']
-
-print jwt_token
+jwt_token = 'Bearer ' + json.loads(response.text)['token']
 
 continue_reading = True
 
@@ -79,8 +77,20 @@ nomor_sepeda_finish_flag = 0
 
 global_uid = ''
 
-def sendDataToServer(payload):
-    pass
+def sendDataToServer(data):
+
+    global jwt_token
+    url = "http://azurarestapi.herokuapp.com/api/peminjamans"
+
+    payload = data
+    headers = {
+        'content-type': "application/x-www-form-urlencoded",
+        'authorization': jwt_token,
+        'cache-control': "no-cache",
+        'postman-token': "80b6c5f7-9546-e304-50c7-c6e6379b20ae"
+    }
+    response = requests.request("POST", url, data=payload, headers=headers)
+    return response
 
 def processKeyOption(key):
     global option
@@ -116,8 +126,10 @@ def pinjam():
     lcd.clear()
     lcd.cursor_pos = (0,0)
     lcd.write_string("Pnjm Spd " + no_sepeda + "?")
+    print "Pnjm Spd " + no_sepeda + "?"
     lcd.cursor_pos = (1,0)
     lcd.write_string("1:Ya 2:No")
+    print "1:Ya 2:No"
     while confirm_pinjam_sepeda_flag != 1 or confirm_pinjam_sepeda_flag != 2:
         pass
     lcd.clear()
@@ -152,11 +164,16 @@ def pinjam():
                 if status == MIFAREReader.MI_OK:
                     MIFAREReader.MFRC522_Read(8)
                     MIFAREReader.MFRC522_StopCrypto1()
+                    data = ""
+                    data = data + "uidMahasiswa=" + global_uid + '&stasiunPinjam=' + NAMA_STASIUN_PINJAM + "&noSepeda=" + nomor_sepeda
+                    response = sendDataToServer(data)
+                    print "Sending data to server"
+                    if(response.status_code == 200):
+                        lcd.write_string("Yay terpinjam")
+                        print "Yay terpinjam"
+                        time.sleep(5)
                 else:
                     print "Authentication error"
-
-        lcd.write_string("Yay terpinjam")
-        time.sleep(5)
     elif(confirm_pinjam_sepeda_flag == 2):
         pinjam()
     return opt
