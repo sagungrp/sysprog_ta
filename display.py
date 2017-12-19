@@ -146,7 +146,7 @@ def processNomorSepedaKey(key):
     global nomor_sepeda
     if key.isdigit():
         nomor_sepeda = nomor_sepeda * 10 + int(key)
-        my_lcd.lcd_display_string(key, 2, len(str(nomor_sepeda)))
+        my_lcd.lcd_display_string(key, 2, len(str(nomor_sepeda))-1)
 
 def processNomorSepedaKeyDelete(key):
     global nomor_sepeda
@@ -195,7 +195,7 @@ def pinjam():
             my_lcd.lcd_display_string("Yay terpinjam", 1)
             global continue_reading
             continue_reading = False
-            time.sleep(1)
+            time.sleep(4)
         elif(response.status_code == 404):
             my_lcd.lcd_display_string("Sudah meminjam", 2)
         clear_variable()
@@ -243,7 +243,9 @@ def kembali():
 
 while True:
     continue_reading = True
-    print "Silahkan Tap Kartu Anda"
+    my_lcd.lcd_clear()
+    my_lcd.lcd_display_string("Silahkan Tap", 1)
+    my_lcd.lcd_display_string("Kartu Anda", 2)
     while continue_reading:
         # Scan for cards    
         (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
@@ -270,6 +272,7 @@ while True:
             status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
             # Check if authenticated
             if status == MIFAREReader.MI_OK:
+                my_lcd.lcd_clear()
                 response = getCardDataFromServer(global_uid)
                 if(response.status_code == 200):
                     peminjaman = json.load(response.text)
