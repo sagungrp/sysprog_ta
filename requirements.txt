@@ -23,4 +23,4 @@ SecretStorage==2.3.1
 six==1.10.0
 SPI-Py==1.0
 spidev==3.2
-urllib3==1.22
+urllib3==1.26.5
