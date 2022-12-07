@@ -2,7 +2,7 @@ Adafruit-BBIO==1.0.9
 Adafruit-CharLCD==1.1.1
 Adafruit-GPIO==1.0.3
 Adafruit-PureIO==0.2.1
-certifi==2017.11.5
+certifi==2022.12.7
 chardet==3.0.4
 cryptography==1.7.1
 enum34==1.1.6
